@@ -1,0 +1,8 @@
+# Android fstab file.
+#<src>      <mnt_point>  <type>  <mnt_flags>            <fs_mgr_flags>
+# system mmcblk0p13
+
+/dev/block/platform/omap/omap_hsmmc.1/by-name/system    /system   ext4  ro 							wait
+/dev/block/platform/omap/omap_hsmmc.1/by-name/cache     /cache    ext4  noatime,nosuid,nodev,nomblk_io_submit,errors=panic 	wait,check
+/dev/block/platform/omap/omap_hsmmc.1/by-name/userdata  /data     ext4  noatime,nosuid,nodev,nomblk_io_submit,errors=panic,data=writeback,commit=15,barrier=0,noauto_da_alloc,discard 	wait,check
+/dev/block/platform/omap/omap_hsmmc.1/by-name/cust      /cust     ext4  ro 							wait
