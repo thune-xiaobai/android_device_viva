@@ -1,8 +1,3 @@
-Hello Niisp，I don't know the way to contact you。
-my email is：shulaibai@hustunique.com   
-Hope you can contact me～～～
-
-！～RR
 android_huawei_viva
 ===================
 
