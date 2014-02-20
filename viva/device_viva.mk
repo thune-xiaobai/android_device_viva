@@ -156,7 +156,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 	ro.product.board=U9200
 
 PRODUCT_PROPERTY_OVERRIDES += \
-	persist.sys.usb.config=mtp,mass_storage,adb
+	persist.sys.usb.config=mtp,adb
 
 #Add Low RAM flag
 PRODUCT_PROPERTY_OVERRIDES += \
