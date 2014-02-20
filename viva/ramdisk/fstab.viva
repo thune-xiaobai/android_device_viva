@@ -1,8 +1,14 @@
-# Android fstab file.
-#<src>      <mnt_point>  <type>  <mnt_flags>            <fs_mgr_flags>
-# system mmcblk0p13
+# version 2
+# device        mount_point     fs_type        mount_flags       fs_mgr_flags
+/dev/block/platform/omap/omap_hsmmc.1/by-name/system      /system      ext4  ro                                                                                       wait
+/dev/block/platform/omap/omap_hsmmc.1/by-name/cache       /cache       ext4  noatime,nosuid,nodev,data=ordered,noauto_da_alloc                                        wait,check
+/dev/block/platform/omap/omap_hsmmc.1/by-name/userdata    /data        ext4  noatime,nosuid,nodev,data=ordered,noauto_da_alloc                                        wait,check
+/dev/block/platform/omap/omap_hsmmc.1/by-name/cust        /cust        ext4  ro                                                                                       wait
+/dev/block/platform/omap/omap_hsmmc.1/by-name/misc        /misc        emmc  defaults  defaults
+/dev/block/platform/omap/omap_hsmmc.1/by-name/boot        /boot        emmc  defaults  recoveryonly
+/dev/block/platform/omap/omap_hsmmc.1/by-name/recovery    /recovery    emmc  defaults  recoveryonly
+/dev/block/platform/omap/omap_hsmmc.1/by-name/bootloader  /bootloader  emmc  defaults  defaults
+/dev/block/platform/omap/omap_hsmmc.1/by-name/xloader     /xloader     emmc  defaults  defaults
 
-/dev/block/platform/omap/omap_hsmmc.1/by-name/system    /system   ext4  ro 							wait
-/dev/block/platform/omap/omap_hsmmc.1/by-name/cache     /cache    ext4  noatime,nosuid,nodev,nomblk_io_submit,errors=panic 	wait,check
-/dev/block/platform/omap/omap_hsmmc.1/by-name/userdata  /data     ext4  noatime,nosuid,nodev,nomblk_io_submit,errors=panic,data=writeback,commit=15,barrier=0,noauto_da_alloc,discard 	wait,check
-/dev/block/platform/omap/omap_hsmmc.1/by-name/cust      /cust     ext4  ro 							wait
+/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc1         auto     vfat      defaults  voldmanaged=sdcard1:auto
+/devices/platform/omap/musb-omap2430/musb-hdrc/usb1       auto     vfat      defaults  voldmanaged=usbdisk0:auto

@@ -22,3 +22,4 @@
 
 add_lunch_combo cm_viva-userdebug
 add_lunch_combo cm_viva-eng
+sh device/huawei/viva/patch/applypatch.sh

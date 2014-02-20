@@ -20,8 +20,10 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 $(call inherit-product-if-exists, vendor/huawei/viva/viva-vendor.mk)
 $(call inherit-product, hardware/ti/omap4xxx/omap4.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
-$(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
+$(call inherit-product, frameworks/native/build/phone-hdpi-dalvik-heap.mk)
+#$(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
 
+COMMON_PATH := device/huawei/viva
 
 # This file includes all definitions that apply to ALL viva devices, and
 # are also specific to viva devices
@@ -29,10 +31,6 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
 # Everything in this directory will become public
 
 DEVICE_PACKAGE_OVERLAYS := device/huawei/viva/overlay
-
-#Camera
-PRODUCT_PACKAGES += \
-        Camera
 
 # Audio Packages
 PRODUCT_PACKAGES += \
@@ -44,24 +42,26 @@ PRODUCT_PACKAGES += \
 	tinyplay \
 	libaudioutils
 
+PRODUCT_PACKAGES += \
+    libnetcmdiface
+
 # PowerHAL
 PRODUCT_PACKAGES += \
 	audio.primary.viva \
 	power.viva \
 	hwcomposer.viva \
-	libion_ti
-
-# APN
-PRODUCT_COPY_FILES += \
-        device/huawei/viva/apns-conf.xml:system/etc/apns-conf.xml
+	libedid \
+	libion_ti \
+	libstagefrighthw \
+	smc_pa_ctrl \
+	tf_daemon
 
 # Ramdisk
 PRODUCT_COPY_FILES += \
-        device/huawei/viva/ramdisk/default.prop:root/default.prop \
-	device/huawei/viva/ramdisk/fstab.viva:root/fstab.viva \
 	device/huawei/viva/ramdisk/init.viva.rc:root/init.viva.rc \
 	device/huawei/viva/ramdisk/init.viva.usb.rc:root/init.viva.usb.rc \
-	device/huawei/viva/ramdisk/ueventd.viva.rc:root/ueventd.viva.rc
+	device/huawei/viva/ramdisk/ueventd.viva.rc:root/ueventd.viva.rc \
+	device/huawei/viva/ramdisk/fstab.viva:root/fstab.viva
 
 # Media / Audio
 PRODUCT_COPY_FILES += \
@@ -81,18 +81,13 @@ PRODUCT_COPY_FILES += \
 
 # BT
 PRODUCT_COPY_FILES += \
-	device/huawei/viva/bluetooth/audio.conf:system/etc/bluetooth/audio.conf \
-	device/huawei/viva/bluetooth/auto_pairing.conf:system/etc/bluetooth/auto_pairing.conf \
-	device/huawei/viva/bluetooth/BCM4330B1.hcd:system/etc/bluetooth/BCM4330B1.hcd \
-	device/huawei/viva/bluetooth/blacklist.conf:system/etc/bluetooth/blacklist.conf \
-	device/huawei/viva/bluetooth/init.bcm.chip_off.sh:system/etc/bluetooth/init.bcm.chip_off.sh \
-	device/huawei/viva/bluetooth/init.bcm.chip_on.sh:system/etc/bluetooth/init.bcm.chip_on.sh \
-	device/huawei/viva/bluetooth/input.conf:system/etc/bluetooth/input.conf \
-	device/huawei/viva/bluetooth/network.conf:system/etc/bluetooth/network.conf
+	device/huawei/viva/config/BCM4330B1.hcd:system/etc/bluetooth/BCM4330B1.hcd \
+	device/huawei/viva/config/init.bcm.chip_off.sh:system/etc/bluetooth/init.bcm.chip_off.sh \
+	device/huawei/viva/config/init.bcm.chip_on.sh:system/etc/bluetooth/init.bcm.chip_on.sh
 
-# Vold
+# Wi-Fi
 PRODUCT_COPY_FILES += \
-	device/huawei/viva/vold.fstab:system/etc/vold.fstab
+	device/huawei/viva/config/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf
 
 # Torch
 PRODUCT_PACKAGES += \
@@ -109,6 +104,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
 	make_ext4fs \
 	setup_fs \
+	e2fsck \
 	l2ping \
 	com.android.future.usb.accessory
 
@@ -150,30 +146,24 @@ PRODUCT_PACKAGES += \
 	librs_jni \
 	com.android.future.usb.accessory
 
-# Filesystem management tools
-PRODUCT_PACKAGES += \
-	make_ext4fs \
-	e2fsck \
-	setup_fs
-
 #Lib Skia test
 PRODUCT_PACKAGES += \
 	SkLibTiJpeg_Test
-
-# SGX540 is slower with the scissor optimization enabled
-PRODUCT_PROPERTY_OVERRIDES += \
-       ro.hwui.disable_scissor_opt=true
-
-# for bugmailer
-#PRODUCT_PACKAGES += send_bug
-#PRODUCT_COPY_FILES += \
-#	system/extras/bugmailer/bugmailer.sh:system/bin/bugmailer.sh \
-#	system/extras/bugmailer/send_bug:system/bin/send_bug
 
 PRODUCT_PROPERTY_OVERRIDES += \
 	ro.setupwizard.enable_bypass=1 \
 	dalvik.vm.dexopt-flags=m=y \
 	ro.product.board=U9200
+
+PRODUCT_PROPERTY_OVERRIDES += \
+	persist.sys.usb.config=mtp,mass_storage,adb
+
+#Add Low RAM flag
+PRODUCT_PROPERTY_OVERRIDES += \
+	ro.config.low_ram=true
+
+PRODUCT_PROPERTY_OVERRIDES += \
+	dalvik.vm.jit.codecachesize=0
 
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 	ro.secure=0
@@ -183,7 +173,7 @@ PRODUCT_CHARACTERISTICS := default
 #PRODUCT_TAGS += dalvik.gc.type-precise
 PRODUCT_AAPT_CONFIG := normal hdpi
 PRODUCT_AAPT_PREF_CONFIG := hdpi
-PRODUCT_LOCALES += en_US hdpi
+PRODUCT_LOCALES += zh_CN hdpi
 BOARD_WLAN_DEVICE_REV := bcm4330_b1
 WIFI_BAND             := 802_11_ABG
 

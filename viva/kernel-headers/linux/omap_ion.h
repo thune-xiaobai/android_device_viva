@@ -39,8 +39,8 @@ struct omap_ion_tiler_alloc_data {
 	struct ion_handle *handle;
 	size_t stride;
 	size_t offset;
-	//u32 out_align;
-	//u32 token;
+	u32 out_align;
+	u32 token;
 };
 struct omap_ion_phys_addr_data {
 	struct ion_handle *handle;

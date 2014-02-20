@@ -61,6 +61,8 @@ static void *vsync_loop(void *data)
     for (;;) {
         pthread_mutex_lock(&vsync_mutex);
         period = vsync_rate; /* re-read rate */
+        if (period <= 0)
+            period = 1000000000 / 60;
         while (!vsync_loop_active) {
             pthread_cond_wait(&vsync_cond, &vsync_mutex);
         }
@@ -93,7 +95,7 @@ bool use_sw_vsync()
     char board[PROPERTY_VALUE_MAX];
     bool rv = false;
     property_get("ro.product.board", board, "");
-    if ((strncmp("blaze", board, PROPERTY_VALUE_MAX) == 0) || (strncmp("viva", board, PROPERTY_VALUE_MAX) == 0) ||
+    if ((strncmp("blaze", board, PROPERTY_VALUE_MAX) == 0) ||
         (strncmp("panda5", board, PROPERTY_VALUE_MAX) == 0)) {
         /* TODO: panda5 really should support h/w vsync */
         rv = true;

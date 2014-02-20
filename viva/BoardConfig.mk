@@ -16,42 +16,13 @@
 # limitations under the License.
 #
 
+# Include path
+TARGET_SPECIFIC_HEADER_PATH := device/huawei/viva/include
+PRODUCT_VENDOR_KERNEL_HEADERS := device/huawei/viva/kernel-headers
+
 # Camera
 USE_CAMERA_STUB := false
 BOARD_USES_TI_CAMERA_HAL := true
-
-## TI_OMAP4_CAMERAHAL_VARIANT := DONOTBUILDIT
-
-HARDWARE_OMX := true
-OMX_VENDOR := ti
-#BOARD_NEEDS_CUTILS_LOG := true
-#OMX_VENDOR_WRAPPER := TI_OMX_Wrapper
-BOARD_OPENCORE_LIBRARIES := libOMX_Core
-BOARD_OPENCORE_FLAGS := -DHARDWARE_OMX=1
-
-#BOARD_USE_TI_DUCATI_H264_PROFILE := true
-
-COMMON_GLOBAL_CFLAGS += -DENHANCED_DOMX
-ENHANCED_DOMX := true
-
-# U9200 uses omap enhancement!
-OMAP_ENHANCEMENT := true
-COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT -DOMAP_ENHANCEMENT_BURST_CAPTURE
-
-COMMON_GLOBAL_CFLAGS += -DMR0_AUDIO_BLOB
-MR0_AUDIO_BLOB := true
-
-TARGET_GLOBAL_CFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
-TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
-
-# Audio
-BOARD_USES_GENERIC_AUDIO := false
-#
-#BOARD_HAVE_FM_RADIO := true
-#BOARD_GLOBAL_CFLAGS += -DHAVE_FM_RADIO
-
-# inherit from the proprietary version
--include vendor/huawei/viva/BoardConfigVendor.mk
 
 # Target arch settings
 TARGET_ARCH := arm
@@ -66,22 +37,93 @@ TARGET_ARCH_VARIANT_CPU := cortex-a9
 TARGET_CPU_VARIANT := cortex-a9
 TARGET_ARCH_VARIANT_FPU := neon
 TARGET_CPU_SMP := true
-ARCH_ARM_HAVE_TLS_REGISTER := true
+#ARCH_ARM_HAVE_TLS_REGISTER := true
+
+TARGET_GLOBAL_CFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
+TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp
+
+# TI Enhancement Settings (Part 1)
+OMAP_ENHANCEMENT := true
+#OMAP_ENHANCEMENT_BURST_CAPTURE := true
+#OMAP_ENHANCEMENT_S3D := true
+#OMAP_ENHANCEMENT_CPCAM := true
+#OMAP_ENHANCEMENT_VTC := true
+OMAP_ENHANCEMENT_MULTIGPU := true
+BOARD_USE_TI_ENHANCED_DOMX := true
+
+# Camera
+COMMON_GLOBAL_CFLAGS += -DNEEDS_VECTORIMPL_SYMBOLS
+
+# Audio
+BOARD_USES_GENERIC_AUDIO := false
+COMMON_GLOBAL_CFLAGS += -DMR0_AUDIO_BLOB
+MR0_AUDIO_BLOB := true
+
+# FM
+#BOARD_HAVE_FM_RADIO := true
+#BOARD_GLOBAL_CFLAGS += -DHAVE_FM_RADIO
 
 #HWcomposer
 BOARD_USES_HWCOMPOSER := true
 #BOARD_USE_SYSFS_VSYNC_NOTIFICATION := true
-TARGET_HAS_WAITFORVSYNC := true
+#TARGET_HAS_WAITFORVSYNC := true
 
 # Setup custom omap4xxx defines
 BOARD_USE_CUSTOM_LIBION := true
+
+# No sync framework for this device...
+TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
+
+BOARD_USE_MHEAP_SCREENSHOT := true
+
+# TI Enhancement Settings (Part 2)
+ifdef BOARD_USE_TI_ENHANCED_DOMX
+    BOARD_USE_TI_DUCATI_H264_PROFILE := true
+    COMMON_GLOBAL_CFLAGS += -DENHANCED_DOMX
+    ENHANCED_DOMX := true
+else
+    DOMX_PATH := hardware/ti/omap4xxx/domx
+endif
+
+ifdef OMAP_ENHANCEMENT
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT -DTARGET_OMAP4
+endif
+
+ifdef OMAP_ENHANCEMENT_BURST_CAPTURE
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT_BURST_CAPTURE
+endif
+
+ifdef OMAP_ENHANCEMENT_S3D
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT_S3D
+endif
+
+ifdef OMAP_ENHANCEMENT_CPCAM
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT_CPCAM
+    PRODUCT_MAKEFILES += $(LOCAL_DIR)/sdk_addon/ti_omap_addon.mk
+endif
+
+ifdef OMAP_ENHANCEMENT_VTC
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT_VTC
+endif
+
+ifdef USE_ITTIAM_AAC
+    COMMON_GLOBAL_CFLAGS += -DUSE_ITTIAM_AAC
+endif
+
+ifdef OMAP_ENHANCEMENT_MULTIGPU
+    COMMON_GLOBAL_CFLAGS += -DOMAP_ENHANCEMENT_MULTIGPU
+endif
 
 # Kernel/Ramdisk
 BOARD_KERNEL_CMDLINE := console=ttyGS2,115200n8 mem=1G vmalloc=768M vram=16M omapfb.vram=0:8M omap_wdt.timer_margin=30 mmcparts=mmcblk0:p15(splash) androidboot.hardware=viva
 BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_PAGESIZE := 2048
 TARGET_PREBUILT_KERNEL := device/huawei/viva/kernel
-TARGET_PROVIDES_INIT_TARGET_RC := true
+
+# Try to build the kernel
+#TARGET_KERNEL_CONFIG := u9200_defconfig
+#TARGET_KERNEL_SOURCE := kernel/huawei/ascend
+#TARGET_KERNEL_CUSTOM_TOOLCHAIN := arm-eabi-4.4.3
 
 # EGL
 BOARD_EGL_CFG := device/huawei/viva/egl.cfg
@@ -108,12 +150,15 @@ WIFI_DRIVER_FW_PATH_AP      := "/vendor/firmware/fw_bcmdhd_apsta.bin"
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/huawei/viva/bluetooth
+BOARD_BLUEDROID_VENDOR_CONF := device/huawei/viva/bluetooth/vnd_viva.txt
 
 # Set 32 byte cache line to true
 ARCH_ARM_HAVE_32_BYTE_CACHE_LINES := true
 
 # RIL
 TARGET_PROVIDES_LIBRIL := vendor/huawei/viva/proprietary/lib/libxgold-ril.so
+BOARD_RIL_NO_CELLINFOLIST := true
 
 # Webkit
 ENABLE_WEBGL := true
@@ -133,20 +178,29 @@ BOARD_FLASH_BLOCK_SIZE := 4096
 BOARD_USES_SECURE_SERVICES := true
 
 # Recovery
+RECOVERY_CHARGEMODE := true
+BOARD_USES_MMCUTILS := true
 BOARD_HAS_NO_SELECT_BUTTON := true
+#BOARD_USE_CUSTOM_RECOVERY_FONT := \"font_10x18.h\"
+BOARD_UMS_LUNFILE := "/sys/class/android_usb/f_mass_storage/lun/file"
+TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/class/android_usb/f_mass_storage/lun/file"
+TARGET_RECOVERY_INITRC := device/huawei/viva/recovery/init.rc
+TARGET_PREBUILT_RECOVERY_KERNEL := device/huawei/viva/recovery_kernel
+TARGET_RECOVERY_FSTAB := device/huawei/viva/ramdisk/fstab.viva
+RECOVERY_FSTAB_VERSION := 2
 
 #TWRP
 #TARGET_RECOVERY_PIXEL_FORMAT := "RGBX_8888"
 DEVICE_RESOLUTION := 540x960
 RECOVERY_GRAPHICS_USE_LINELENGTH := true
-TARGET_RECOVERY_INITRC := device/huawei/viva/recovery/init.twrp.rc
+#TARGET_RECOVERY_INITRC := device/huawei/viva/recovery/init.twrp.rc
 RECOVERY_SDCARD_ON_DATA := true
 TW_INTERNAL_STORAGE_PATH := "/data/media"
 TW_INTERNAL_STORAGE_MOUNT_POINT := "data"
 TW_EXTERNAL_STORAGE_PATH := "/sdcard"
 TW_EXTERNAL_STORAGE_MOUNT_POINT := "sdcard"
 TW_DEFAULT_EXTERNAL_STORAGE := true
-TW_FLASH_FROM_STORAGE := true	  	
+TW_FLASH_FROM_STORAGE := true
 TW_HAS_DOWNLOAD_MODE := true
 SP1_NAME := "cust"
 SP1_BACKUP_METHOD := files
@@ -157,3 +211,6 @@ TW_BRIGHTNESS_PATH := /sys/devices/omapdss/display0/backlight/lcd/brightness
 TW_CUSTOM_BATTERY_PATH := /sys/class/power_supply/Battery
 TW_SDEXT_NO_EXT4 := true
 # End TWRP
+
+# inherit from the proprietary version
+-include vendor/huawei/viva/BoardConfigVendor.mk
