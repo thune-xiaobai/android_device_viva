@@ -1,0 +1,8 @@
+#!/system/bin/sh
+
+sysrw
+chmod 0755 /system/etc/utils/*
+chmod 0755 /system/etc/sysctl
+
+sysro
+/system/etc/sysctl

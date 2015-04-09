@@ -1,0 +1,33 @@
+#rild
+/data/smc(/.*)?                 u:object_r:tee_data_file:s0
+/dev/akm8975_aot                u:object_r:sensors_device:s0
+/dev/akm8975_dev                u:object_r:sensors_device:s0
+/dev/tiler                      u:object_r:video_device:s0
+/dev/proximity			u:object_r:sensors_device:s0
+/dev/light			u:object_r:sensors_device:s0
+
+/dev/xmd-tty0			u:object_r:radio_device:s0
+/dev/xmd-tty1			u:object_r:radio_device:s0
+/dev/xmd-tty2			u:object_r:radio_device:s0
+/dev/xmd-tty3			u:object_r:radio_device:s0
+/dev/xmd-tty4			u:object_r:radio_device:s0
+/dev/xmd-tty7			u:object_r:radio_device:s0
+/dev/xmd-tty9			u:object_r:radio_device:s0
+/dev/xmd-tty10			u:object_r:radio_device:s0
+/dev/xmd-tty11			u:object_r:radio_device:s0
+
+
+#The devices and files used by the hciattach service are device specific
+/dev/ttyO1                         u:object_r:hci_attach_dev:s0
+
+# ttyO0 is for uart driver. gps_device is device specific
+/dev/ttyO0   u:object_r:gps_device:s0
+
+/dev/dsscomp                    u:object_r:video_device:s0
+
+# for wpa_supp
+/dev/rfkill u:object_r:rfkill_device:s0
+
+# System binaries
+/system/vendor/bin/pvrsrvinit u:object_r:pvrsrvinit_exec:s0
+/system/vendor/bin/pvrsrvctl_SGX540_120 u:object_r:pvrsrvinit_exec:s0
