@@ -159,8 +159,9 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR ?= device/huawei/viva/bluetooth
 ARCH_ARM_HAVE_32_BYTE_CACHE_LINES := true
 
 # RIL
-TARGET_PROVIDES_LIBRIL := vendor/huawei/viva/proprietary/lib/libxgold-ril.so
-BOARD_RIL_NO_CELLINFOLIST := true
+BOARD_PROVIDES_LIBRIL := true
+#TARGET_PROVIDES_LIBRIL := vendor/huawei/viva/proprietary/lib/libxgold-ril.so
+#BOARD_RIL_NO_CELLINFOLIST := true
 
 # Webkit
 ENABLE_WEBGL := true
