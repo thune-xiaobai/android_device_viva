@@ -18,7 +18,7 @@
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 $(call inherit-product-if-exists, vendor/huawei/viva/viva-vendor.mk)
-$(call inherit-product, hardware/ti/omap4xxx/omap4.mk)
+#$(call inherit-product, hardware/ti/omap4xxx/omap4.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-hdpi-dalvik-heap.mk)
 #$(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
@@ -145,8 +145,7 @@ packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/pe
 
 
 PRODUCT_PACKAGES += \
-	librs_jni \
-	com.android.future.usb.accessory
+	libcorkscrew
 
 #Lib Skia test
 PRODUCT_PACKAGES += \

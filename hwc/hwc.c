@@ -24,10 +24,6 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 
-#ifdef SYSFS_VSYNC_NOTIFICATION
-#include <sys/prctl.h>
-#endif
-
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #include <cutils/native_handle.h>
@@ -48,6 +44,7 @@
 #include <ion_ti/ion.h>
 
 #include "hwc_dev.h"
+#include "display.h"
 #include "dock_image.h"
 #include "sw_vsync.h"
 
@@ -798,6 +795,9 @@ static bool is_valid_layer(omap_hwc_device_t *hwc_dev, hwc_layer_1_t *layer, IMG
     if ((layer->flags & HWC_SKIP_LAYER) || !handle)
         return false;
 
+    if (layer->compositionType == HWC_FRAMEBUFFER_TARGET)
+        return false;
+
     if (!is_valid_format(handle->iFormat))
         return false;
 
@@ -855,7 +855,7 @@ static int set_best_hdmi_mode(omap_hwc_device_t *hwc_dev, uint32_t xres, uint32_
     int dis_ix = hwc_dev->on_tv ? 0 : 1;
     struct _qdis {
         struct dsscomp_display_info dis;
-        struct dsscomp_videomode modedb[32];
+        struct dsscomp_videomode modedb[MAX_DISPLAY_CONFIGS];
     } d = { .dis = { .ix = dis_ix } };
     omap_hwc_ext_t *ext = &hwc_dev->ext;
 
@@ -983,7 +983,12 @@ static void gather_layer_statistics(omap_hwc_device_t *hwc_dev, hwc_display_cont
         uint32_t s3d_layout_type = get_s3d_layout_type(layer);
 #endif
 
-        layer->compositionType = HWC_FRAMEBUFFER;
+        if (layer->compositionType == HWC_FRAMEBUFFER_TARGET) {
+            num->framebuffer++;
+            num->composited_layers--;
+        } else {
+            layer->compositionType = HWC_FRAMEBUFFER;
+        }
 
         if (is_valid_layer(hwc_dev, layer, handle)) {
 #ifdef OMAP_ENHANCEMENT_S3D
@@ -1393,6 +1398,9 @@ static void check_sync_fds(size_t numDisplays, hwc_display_contents_1_t** displa
     unsigned int i, j;
     for (i = 0; i < numDisplays; i++) {
         hwc_display_contents_1_t* list = displays[i];
+        if (!list)
+            continue;
+
         if (list->retireFenceFd >= 0) {
             ALOGW("retireFenceFd[%u] was %d", i, list->retireFenceFd);
             list->retireFenceFd = -1;
@@ -1975,10 +1983,26 @@ static int hwc_set(struct hwc_composer_device_1 *dev,
         // screen off. no shall not call eglSwapBuffers() in that case.
 
         if (hwc_dev->use_sgx) {
-            if (!eglSwapBuffers((EGLDisplay)dpy, (EGLSurface)sur)) {
-                ALOGE("eglSwapBuffers error");
-                err = HWC_EGL_ERROR;
-                goto err_out;
+            if (hwc_dev->base.common.version <= HWC_DEVICE_API_VERSION_1_0) {
+                if (!eglSwapBuffers((EGLDisplay)dpy, (EGLSurface)sur)) {
+                    ALOGE("eglSwapBuffers error");
+                    err = HWC_EGL_ERROR;
+                    goto err_out;
+                }
+            } else {
+                if (list) {
+                    if (hwc_dev->counts.framebuffer) {
+                        /* Layer with HWC_FRAMEBUFFER_TARGET should be last in the list. The buffer handle
+                         * is updated by SurfaceFlinger after prepare() call, so FB slot has to be updated
+                         * in set().
+                         */
+                        hwc_dev->buffers[0] = list->hwLayers[list->numHwLayers - 1].handle;
+                    } else {
+                        ALOGE("No buffer is provided for GL composition");
+                        err = -EFAULT;
+                        goto err_out;
+                    }
+                }
             }
         }
 
@@ -2093,6 +2117,7 @@ static int hwc_device_close(hw_device_t* device)
 
         /* pthread will get killed when parent process exits */
         pthread_mutex_destroy(&hwc_dev->lock);
+        free_displays(hwc_dev);
         free(hwc_dev);
     }
 
@@ -2337,39 +2362,6 @@ static void handle_uevents(omap_hwc_device_t *hwc_dev, const char *buff, int len
     }
 }
 
-#ifdef SYSFS_VSYNC_NOTIFICATION
-static void *omap4_hwc_vsync_sysfs_loop(void *data)
-{
-    omap_hwc_device_t *hwc_dev = data;
-    static char buf[4096];
-    int vsync_timestamp_fd;
-    fd_set exceptfds;
-    int res;
-    int64_t timestamp = 0;
-
-    vsync_timestamp_fd = open("/sys/devices/platform/omapfb/vsync_time", O_RDONLY);
-    char thread_name[64] = "hwcVsyncThread";
-    prctl(PR_SET_NAME, (unsigned long) &thread_name, 0, 0, 0);
-    setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
-    memset(buf, 0, sizeof(buf));
-
-    ALOGD("Using sysfs mechanism for VSYNC notification");
-
-    FD_ZERO(&exceptfds);
-    FD_SET(vsync_timestamp_fd, &exceptfds);
-    do {
-        ssize_t len = read(vsync_timestamp_fd, buf, sizeof(buf));
-        timestamp = strtoull(buf, NULL, 0);
-        if(hwc_dev->procs)
-            hwc_dev->procs->vsync(hwc_dev->procs, 0, timestamp);
-        select(vsync_timestamp_fd + 1, NULL, NULL, &exceptfds, NULL);
-        lseek(vsync_timestamp_fd, 0, SEEK_SET);
-    } while (1);
-
-    return NULL;
-}
-#endif
-
 static void *hdmi_thread(void *data)
 {
     omap_hwc_device_t *hwc_dev = data;
@@ -2503,6 +2495,17 @@ static int hwc_blank(struct hwc_composer_device_1 *dev, int dpy, int blank)
     return 0;
 }
 
+static int hwc_getDisplayConfigs(struct hwc_composer_device_1* dev, int disp, uint32_t* configs, size_t* numConfigs)
+{
+    return get_display_configs((omap_hwc_device_t *)dev, disp, configs, numConfigs);
+}
+
+static int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
+                                    uint32_t config, const uint32_t* attributes, int32_t* values)
+{
+    return get_display_attributes((omap_hwc_device_t *)dev, disp, config, attributes, values);
+}
+
 static int hwc_device_open(const hw_module_t* module, const char* name, hw_device_t** device)
 {
     omap_hwc_module_t *hwc_mod = (omap_hwc_module_t *)module;
@@ -2547,6 +2550,8 @@ static int hwc_device_open(const hw_module_t* module, const char* name, hw_devic
     hwc_dev->base.blank = hwc_blank;
     hwc_dev->base.dump = hwc_dump;
     hwc_dev->base.registerProcs = hwc_registerProcs;
+    hwc_dev->base.getDisplayConfigs = hwc_getDisplayConfigs;
+    hwc_dev->base.getDisplayAttributes = hwc_getDisplayAttributes;
     hwc_dev->base.query = hwc_query;
 
     hwc_dev->fb_dev = hwc_mod->fb_dev;
@@ -2584,12 +2589,9 @@ static int hwc_device_open(const hw_module_t* module, const char* name, hw_devic
         goto done;
     }
 
-    ret = ioctl(hwc_dev->dsscomp_fd, DSSCIOC_QUERY_DISPLAY, &hwc_dev->fb_dis);
-    if (ret) {
-        ALOGE("failed to get display info (%d): %m", errno);
-        err = -errno;
+    err = init_primary_display(hwc_dev);
+    if (err)
         goto done;
-    }
 
     hwc_dev->ion_fd = ion_open();
     if (hwc_dev->ion_fd < 0) {
@@ -2613,12 +2615,14 @@ static int hwc_device_open(const hw_module_t* module, const char* name, hw_devic
         ALOGI("Primary display is HDMI");
         hwc_dev->on_tv = 1;
     } else {
+#ifndef HDMI_DISABLED
         hwc_dev->hdmi_fb_fd = open("/dev/graphics/fb1", O_RDWR);
         if (hwc_dev->hdmi_fb_fd < 0) {
             ALOGE("failed to open hdmi fb (%d)", errno);
             err = -errno;
             goto done;
         }
+#endif
     }
 
     set_primary_display_transform_matrix(hwc_dev);
@@ -2634,7 +2638,6 @@ static int hwc_device_open(const hw_module_t* module, const char* name, hw_devic
         err = -errno;
         goto done;
     }
-
     if (pthread_create(&hwc_dev->hdmi_thread, NULL, hdmi_thread, hwc_dev))
     {
         ALOGE("failed to create HDMI listening thread (%d): %m", errno);
@@ -2685,15 +2688,6 @@ static int hwc_device_open(const hw_module_t* module, const char* name, hw_devic
     }
     handle_hotplug(hwc_dev);
 
-#ifdef SYSFS_VSYNC_NOTIFICATION
-    if (pthread_create(&hwc_dev->vsync_thread, NULL, omap4_hwc_vsync_sysfs_loop, hwc_dev))
-    {
-        ALOGE("pthread_create() failed (%d): %m", errno);
-        err = -errno;
-        goto done;
-    }
-#endif
-
     ALOGI("open_device(rgb_order=%d nv12_only=%d)",
         hwc_dev->flags_rgb_order, hwc_dev->flags_nv12_only);
 
@@ -2733,6 +2727,7 @@ done:
             close(hwc_dev->fb_fd);
         pthread_mutex_destroy(&hwc_dev->lock);
         free(hwc_dev->buffers);
+        free_displays(hwc_dev);
         free(hwc_dev);
     }
 
