@@ -1,5 +1,4 @@
-/*
- * Copyright (C) 2012 The Android Open Source Project
+opyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,5 +17,9 @@
 #define _BDROID_BUILDCFG_H
 
 #define BTM_DEF_LOCAL_NAME   "HUAWEI VIVA"
+
+#define BLE_INCLUDED TRUE
+#define BTA_GATT_INCLUDED TRUE
+#define SMP_INCLUDED TRUE
 
 #endif

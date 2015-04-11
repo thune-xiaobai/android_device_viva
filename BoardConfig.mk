@@ -64,6 +64,7 @@ MR0_AUDIO_BLOB := true
 USE_LEGACY_AUDIO_POLICY := 1
 
 # FM
+#AUDIO_FEATURE_ENABLED_FM := true
 #BOARD_HAVE_FM_RADIO := true
 #BOARD_GLOBAL_CFLAGS += -DHAVE_FM_RADIO
 
@@ -152,14 +153,14 @@ WIFI_DRIVER_FW_PATH_AP      := "/vendor/firmware/fw_bcmdhd_apsta.bin"
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR ?= device/huawei/viva/bluetooth
-#BOARD_BLUEDROID_VENDOR_CONF := device/huawei/viva/bluetooth/vnd_viva.txt
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/huawei/viva/bluetooth
+BOARD_BLUEDROID_VENDOR_CONF := device/huawei/viva/bluetooth/vnd_viva.txt
 
 # Set 32 byte cache line to true
 ARCH_ARM_HAVE_32_BYTE_CACHE_LINES := true
 
 # RIL
-BOARD_PROVIDES_LIBRIL := true
+#BOARD_PROVIDES_LIBRIL := true
 #TARGET_PROVIDES_LIBRIL := vendor/huawei/viva/proprietary/lib/libxgold-ril.so
 #BOARD_RIL_NO_CELLINFOLIST := true
 

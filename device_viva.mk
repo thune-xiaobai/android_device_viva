@@ -19,6 +19,7 @@
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 $(call inherit-product-if-exists, vendor/huawei/viva/viva-vendor.mk)
 #$(call inherit-product, hardware/ti/omap4xxx/omap4.mk)
+$(call inherit-product, device/huawei/viva/Android.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-hdpi-dalvik-heap.mk)
 #$(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
@@ -57,7 +58,7 @@ PRODUCT_PACKAGES += \
 	libstagefrighthw \
 	smc_pa_ctrl \
 	tf_daemon \
-	gralloc.omap4.so
+	gralloc.omap4
 
 # Ramdisk
 PRODUCT_COPY_FILES += \
@@ -82,11 +83,12 @@ PRODUCT_COPY_FILES += \
 
 # Wi-Fi
 PRODUCT_COPY_FILES += \
-	device/huawei/viva/config/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf
+	device/huawei/viva/config/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
+	device/huawei/viva/config/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
 
 # Bluetooth
-PRODUCT_COPY_FILES += \
-	device/huawei/viva/bluetooth/bt_vendor.conf:system/etc/buetooth/bt_vendor.conf
+#PRODUCT_COPY_FILES += \
+#	device/huawei/viva/bluetooth/bt_vendor.conf:system/etc/buetooth/bt_vendor.conf
 
 # Torch
 PRODUCT_PACKAGES += \
@@ -146,6 +148,9 @@ packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/pe
 
 PRODUCT_PACKAGES += \
 	libcorkscrew
+
+# Enable Torch
+PRODUCT_PACKAGES += Torch
 
 #Lib Skia test
 PRODUCT_PACKAGES += \
